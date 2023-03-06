@@ -1,0 +1,5 @@
+$AppsUseLightThemeKey = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+$TaskbarSmallIconsKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+$MMTaskbarEnabledKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+$SystemUsesLightThemeKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
+$HideIconsKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
