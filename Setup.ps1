@@ -61,15 +61,15 @@ if ($AlwaysSkipRustInstall -eq "0") {
 	}
 
 	if ($Screen -eq "1") {
-		$rustInstallScript = {
+		$cppInstallScript = {
 				.$PSScriptRoot\ExtraSoftware\vs_Enterprise.exe modify --installPath "C:\Program Files\Microsoft Visual Studio\2022\Enterprise" --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --quiet --norestart
-				.$PSScriptRoot\ExtraSoftware\rustup-init.exe -y -q
 		}
-		$rustInstallEndScript = {
+		$cppInstallEndScript = {
+			.$PSScriptRoot\ExtraSoftware\rustup-init.exe -y -q
 			Write-Host '[Done] Rust Install'
 		}
 
-		Start-Task -Name "rustinstall" -Script $rustInstallScript -EndScript $rustInstallEndScript -ComplexName "Install Rust"
+		Start-Task -Name "cpp" -Script $cppInstallScript -EndScript $cppInstallEndScript -ComplexName "Install VS cpp tools"
 	}
 	else {
 		Write-Host '[Skipped] Install Rust'
@@ -95,8 +95,6 @@ if ($AlwaysSkipVSCodeExtensionUninstall -eq "0") {
 	if ($Screen -eq "1") {
 		$removeVSScript = {
 			Remove-Item "C:\Program Files\Microsoft VS Code\data\extensions\*" -Recurse -Force -ErrorAction SilentlyContinue
-			Copy-Item -Path "$PSScriptRoot\ExtraSoftware\extensions.zip" -Destination "C:\Program Files\Microsoft VS Code\data" -Wait
-			Start-Process "C:\Program Files\7-Zip\7z.exe" -ArgumentList "x C:\Program Files\Microsoft VS Code\data\extensions.zip -oC:\Program Files\Microsoft VS Code\data\" -Wait 
 		}
 		$removeVSEndScript = {
 			Write-Host '[Done] Uninstall useless VSCode extensions'
@@ -130,8 +128,8 @@ if ($AlwaysSkipCmderInstall -eq "0") {
 			Start-Process "C:\Program Files\7-Zip\7z.exe" -ArgumentList "x C:\Users\2032422\Documents\cmder.zip -oC:\" -Wait
 		}
 		$cmderInstallEndScript = {
-			md 'C:\Users\2032422\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe' > $null
-			md 'C:\Users\2032422\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState' > $null
+			mkdir 'C:\Users\2032422\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe' > $null
+			mkdir 'C:\Users\2032422\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState' > $null
 			Copy-Item -Path "$PSScriptRoot\ExtraSoftware\settings.json" -Destination "C:\Users\2032422\AppData\Local\Packages\Microsoft.WindowsTerminal_8wekyb3d8bbwe\LocalState\"
 			Write-Host '[Done] Cmder Install'
 		}
@@ -147,6 +145,41 @@ else {
 }
 #endregion
 
+#region Start CMake Job
+if ($AlwaysSkipCMakeInstall -eq "0") {
+
+	$Screen = "0"
+
+	if ($AlwaysInstallCMake -eq "1") {
+		$Screen = "1"
+	}
+	else {
+		$Screen = Read-Host -Prompt 'Install CMake ? (1/0)'
+	}
+
+	if ($Screen -eq "1") {
+		$cmakeInstallScript = {
+			Start-Process msiexec.exe -Wait -ArgumentList "/i \\laboratoire.collegeem.qc.ca\Stockage\usagers\Etudiants\2032422\ExtraSoftware\cmake-3.26.0-windows-x86_64.msi /qn"
+
+			$oldpath = (Get-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH).path
+			$oldpath += ";C:\Program Files\CMake\bin"
+			Set-ItemProperty -Path 'Registry::HKEY_LOCAL_MACHINE\System\CurrentControlSet\Control\Session Manager\Environment' -Name PATH -Value $oldpath
+		}
+		$cmakeInstallEndScript = {
+			Write-Host '[Done] CMake Install'
+		}
+
+		Start-Task -Name "cmakeinstall" -Script $cmakeInstallScript -EndScript $cmakeInstallEndScript -ComplexName "CMake Install"
+	}	
+	else {
+		Write-Host '[Skipped] Install CMake'
+	}
+}
+else {
+	Write-Host '[Skipped] Install CMake'
+}
+#endregion
+
 #region Git configuration
 git config --global user.name $GitUserName
 Write-Host '[Done] Set git user name to "' -NoNewline
@@ -156,9 +189,6 @@ git config --global user.email $GitEmail
 Write-Host '[Done] Set git email to "' -NoNewline
 Write-Host $GitEmail -NoNewline
 Write-Host '"'
-
-corepack enable
-corepack prepare yarn@1.22.19 --activate
 
 $powertoysInstallScript = {
 	winget install Microsoft.PowerToys -s winget
@@ -220,31 +250,6 @@ if ($AlwaysSkipNetSupportUninstall -eq "0") {
 }
 else {
 	Write-Host '[Skipped] Uninstall NetSupport School'
-}
-#endregion
-
-#region Install VNCViewer
-if ($AlwaysSkipVNCViewerInstall -eq "0") {
-
-	$Screen = "0"
-
-	if ($AlwaysInstallVNCViewer -eq "1") {
-		$Screen = "1"
-	}
-	else {
-		$Screen = Read-Host -Prompt 'Install VNC-Viewer ? (1/0)'
-	}
-
-	if ($Screen -eq "1") {
-		msiexec /i "$PSScriptRoot\ExtraSoftware\VNC-Viewer\VNC-Viewer-6.21.1109-Windows-en-64bit.msi"
-		Write-Host '[Done] Install VNC-Viewer'
-	}	
-	else {
-		Write-Host '[Skipped] Install VNC-Viewer'
-	}
-}
-else {
-	Write-Host '[Skipped] Install VNC-Viewer'
 }
 #endregion
 
